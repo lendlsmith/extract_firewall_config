@@ -13,8 +13,8 @@ def Parse_FW_configuration(FW):
     FW_name     = FW[0]
     FW_IP       = FW[1]
     FW_Platform = FW[2]
-    FW_Username = FW[3]
-    FW_Password = FW[4]    
+    FW_Username = input("Enter the username: ")
+    FW_Password = input("Enter the password: ")  
     
     #To be Tested
     if(FW_Platform == 'Fortinet'):
@@ -75,7 +75,7 @@ for line in firewallsData[1:]: #start from 1 to neglect the header line
     unParsedFW.append(name+"_"+ip)
 
 for FW in FWsDic.values():
-    print FW
+    print(FW)
 
 #raw_input("FW Date read")
 
@@ -87,8 +87,8 @@ while len(unParsedFW) != 0:# for the code to retry till all the FW configuration
             Parse_FW_configuration(FWsDic[fw])
             unParsedFW.remove(fw)
             print(fw,"Done")
-            print "Remaining FWs List:"
-            print unParsedFW
+            print("Remaining FWs List:")
+            print(unParsedFW)
         except Exception as error: 
             print(error)
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>error "+str(fw))
