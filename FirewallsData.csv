@@ -1,4 +1,3 @@
-FW Name,FW IP,FW (Fortinet/Juniper Junos/Juniper ScreenOS),FW Username,FW Password
-DC_FW,3.3.3.3,Juniper ScreenOS,UserName,P@ssw0rd
-Public_FW,2.2.2.2,Fortinet,UserName,P@ssw0rd
-perimeter_FW,1.1.1.1,Juniper Junos,UserName,P@ssw0rd
+FW Name,FW IP,FW Platform
+Public_FW,2.2.2.2,Fortinet
+Internal_FW,3.3.3.3,Fortinet
