@@ -29,49 +29,17 @@ def Parse_FW_configuration(FW):
             routeFile.write(routeLines)
             configFile.close()
             routeFile.close()
-            device.disconnect()
-    
-    if(FW_Platform == 'Juniper Junos'):
-            device = ConnectHandler(device_type='juniper', ip= FW_IP , username=FW_Username, password=FW_Password)
-            device.send_command_timing('cli',2,1500)#to decide where to start(2,1500 ) used for delay and waiting time
-            configLines = device.send_command_timing('show configuration | display set | no-more',2,1500)
-            routeLines = device.send_command_timing('show route | no-more',2,1500)
-            configLines = str(configLines)
-            configFile = open(FW_name+".txt" , "w")
-            configFile.write(configLines)
-            routeFile = open(FW_name+"_routes.txt" , "w")
-            routeFile.write(routeLines)
-            configFile.close()
-            routeFile.close()
-            device.disconnect()
-
-    if(FW_Platform == 'Juniper ScreenOS'):
-            device = ConnectHandler(device_type='juniper', ip= FW_IP , username=FW_Username, password=FW_Password)
-            configLines = device.send_command_timing('get config',2,1500)#to decide where to start(2,1500 ) used for delay and waiting time
-            configLines = str(configLines)
-            routeLines = device.send_command_timing('get route',2,1500)
-            routeLines = str(routeLines)
-            configFile = open(FW_name+".txt" , "w")
-            configFile.write(configLines)
-            routeFile = open(FW_name+"_routes.txt" , "w")
-            routeFile.write(routeLines)
-            configFile.close()
-            routeFile.close()
-            device.disconnect()
-      
-    
-
+            device.disconnect()  
 
 #extract configuration and routes from the FW :
-
 
 firewallsData = ReadFile("FirewallsData.csv")
 FWsDic = {}
 unParsedFW = []
 #print firewallsData
 for line in firewallsData[1:]: #start from 1 to neglect the header line 
-    name, ip, platform, UserName, Password = line.split(',')
-    FWsDic[name+"_"+ip] = [name+"_"+ip, ip, platform, UserName, Password] #created FW dictionary with all needed Data 
+    name, ip, platform = line.split(',')
+    FWsDic[name+"_"+ip] = [name+"_"+ip, ip, platform] #created FW dictionary with all needed Data 
     unParsedFW.append(name+"_"+ip)
 
 for FW in FWsDic.values():
