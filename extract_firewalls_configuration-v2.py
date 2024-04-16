@@ -1,39 +1,75 @@
-import csv
 import os
-import datetime
-from fortinet_api import FortinetAPI
+import getpass
+from netmiko import ConnectHandler
+from datetime import datetime
 
-# Set path for CSV import
-csv_file = 'FirewallsData.csv'
+def ReadFile(inFile):
+    # Function to read .txt files into python list
+    with open(inFile, "r") as f:
+        content = f.readlines()   
+    content = [x.strip() for x in content]
+    return content
 
-# Set the path to the root folder to save exports
-root_folder = f'Firewall_Configs_Backup_{datetime.now().strftime("%Y-%m-%d")}'
-os.mkdir(root_folder)
+def Parse_FW_configuration(FW, username, password):
+    # Read FW configuration/routes and add them to .txt files
+    FW_name = FW[0]
+    FW_IP = FW[1]
+    FW_Company = FW[2]
+    
+    device = ConnectHandler(device_type='fortinet', ip=FW_IP, username=username, password=password)
+    device.send_command_timing('cli', 2, 1500)  # To decide where to start (2,1500) used for delay and waiting time
+    configLines = device.send_command_timing('show full-configuration', 2, 1500)
+    routeLines = device.send_command_timing('get router info routing-table details', 2, 1500)
+    configLines = str(configLines)
+    
+    # Add datetime stamp to filenames
+    timestamp = datetime.now().strftime("%Y%m%d")  # YearMonthDay
+    # timestamp = datetime.now().strftime("%Y%m%d%H%M%S") # YearMonthDayHourMinuteSecond
+    root_folder = "Firewall_config_backup_" + timestamp
+    if not os.path.exists(root_folder):
+        os.makedirs(root_folder)
+    
+    company_folder = os.path.join(root_folder, FW_Company)
+    if not os.path.exists(company_folder):
+        os.makedirs(company_folder)
+    
+    # Write configuration and routes to files within company folder
+    configFile = open(os.path.join(company_folder, FW_name + "_config_" + timestamp + ".txt"), "w")
+    configFile.write(configLines)
+    routeFile = open(os.path.join(company_folder, FW_name + "_routes_" + timestamp + ".txt"), "w")
+    routeFile.write(routeLines)
+    configFile.close()
+    routeFile.close()
+    device.disconnect()
 
-# Prompt for credentials
-username = input('Enter your Fortinet username: ')
-password = getpass.getpass('Enter your Fortinet password: ')
+# Extract configuration and routes from the FW :
 
-# Read CSV file and extract data
-with open(csv_file, 'r') as csv_f:
-    reader = csv.reader(csv_f)
-    next(reader)  # Skip the header row
-    for row in reader:
-        hostname = row[0]
-        ip = row[1]
-        company = row[2]
+firewallsData = ReadFile("FirewallsData.csv")
+FWsDic = {}
+unParsedFW = []
 
-        # Initialize the FortinetAPI object with the IP and creds
-        api = FortinetAPI(hostname, ip_address, username, password)
+# Prompt for username and password
+FW_Username = input("Enter the username: ")
+FW_Password = getpass.getpass("Enter the password: ")
 
-        # Get firewall config for the hostname
-        config = api.get_config()
+for line in firewallsData[1:]:  # Start from 1 to neglect the header line
+    name, ip, company = line.split(',')
+    FWsDic[name + "_" + ip] = [name + "_" + ip, ip, company.strip()]  # Removed platform from the dictionary
+    unParsedFW.append(name + "_" + ip)
 
-        # Create new folder in the root folder for the sub
-        company_folder = os.path.join(root_folder, company)
-        if not os.path.exists(company_folder):
-            os.mkdir(company_folder)
+for FW in FWsDic.values():
+    print(FW)
 
-        # Save the firewall config to a file in the company folder
-        with open(os.path.join(root_folder, company, f'{hostname}_config.txt'), 'w') as config_file:
-            config_file.write(config)
+while len(unParsedFW) != 0:
+    for fw in unParsedFW:
+        try:
+            print("try ", fw)
+            Parse_FW_configuration(FWsDic[fw], FW_Username, FW_Password)
+            unParsedFW.remove(fw)
+            print(fw, "Done")
+            print("Remaining FWs List:")
+            print(unParsedFW)
+        except Exception as error: 
+            print(error)
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>error " + str(fw))
+            continue
