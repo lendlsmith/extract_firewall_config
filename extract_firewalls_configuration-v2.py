@@ -1,7 +1,7 @@
 import os
 import getpass
 from netmiko import ConnectHandler
-from datetime import datetime
+from datetime import datetime  # Import datetime module
 
 def ReadFile(inFile):
     # Function to read .txt files into python list
